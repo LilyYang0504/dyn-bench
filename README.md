@@ -26,17 +26,15 @@
 
 | 模型系列 | 模型规模 | HuggingFace模型ID |
 |---------|---------|------------------|
-| **InternVL3** | 1B / 2B / 4B / 8B / 78B | `OpenGVLab/InternVL3-{1B,2B,4B,8B,78B}` |
-| **InternVL3.5** | 1B / 2B / 4B / 8B / 78B | `OpenGVLab/InternVL3_5-{1B,2B,4B,8B,78B}` |
-| **Qwen2.5-VL** | 2B / 7B / 72B | `Qwen/Qwen2.5-VL-{2B,7B,72B}-Instruct` |
-| **Qwen3-VL** | 2B / 8B / 14B | `Qwen/Qwen3-VL-{2B,8B,14B}-Instruct` |
+| **InternVL3** | 1B / 2B / 8B / 9B / 14B / 38B / 78B | `OpenGVLab/InternVL3-{1B,2B,8B,9B,78B}` |
+| **InternVL3.5** | 1B / 2B / 4B / 8B / 14B / 38B | `OpenGVLab/InternVL3_5-{1B,2B,4B,8B,14B,38B}` |
+| **Qwen2.5-VL** | 3B / 7B / 32B / 72B | `Qwen/Qwen2.5-VL-{3B,7B,32B,72B}-Instruct` |
+| **Qwen3-VL** | 2B / 4B / 8B / 32B | `Qwen/Qwen3-VL-{2B,4B,8B,32B}-Instruct` |
 | **Qwen3-VL-MoE** | 235B-A22B | `Qwen/Qwen3-VL-235B-A22B-Instruct` |
-| **LLaVA-OneVision** | 0.5B / 7B / 72B | `lmms-lab/LLaVA-OneVision-{0.5B,7B,72B}` |
+| **LLaVA-OneVision** | 4B / 8B | `lmms-lab/LLaVA-One-Vision-1.5-{4B,8B}-Instruct` |
 | **VST** | 7B | `rayruiyang/VST-7B-RL` |
 | **Spatial-SSRL** | 7B | `internlm/Spatial-SSRL-7B` |
 | **SpatialLadder** | 3B | `hongxingli/SpatialLadder-3B` |
-
-> **注意**: 仅支持 QA 任务的模型在运行时会自动跳过 Mask 任务。若 `task.type` 设置为 `all` 或 `mask`，系统将只执行 QA 部分并记录警告。
 
 ## 🚀 快速开始
 
