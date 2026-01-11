@@ -38,14 +38,7 @@ pip install pyyaml numpy pillow tqdm scipy
 pip install hf_xet
 ```
 
-### 2. 下载数据集
-
-```bash
-# 使用评测脚本下载
-bash start_eval.sh --conf ./conf/config.yaml --download
-```
-
-### 3. 配置
+### 2. 配置
 
  `conf/config.yaml`：
 
@@ -59,7 +52,7 @@ task:
   type: "all"  # all / qa / mask
 ```
 
-### 4. 运行评测
+### 3. 运行评测
 
 ```bash
 # 首次评测需下载数据, 通过传入download参数实现
