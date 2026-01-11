@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# 用法: bash start_eval.sh --conf ./conf/config.yaml [--download]
-
 CONFIG_PATH="./conf/config.yaml"
 DOWNLOAD_DATA=false
 
-# 解析命令行参数
 while [[ $# -gt 0 ]]; do
     case $1 in
         --conf)
@@ -17,37 +14,37 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         *)
-            echo "错误: 未知参数 '$1'"
-            echo "用法: bash start_eval.sh --conf ./conf/config.yaml [--download]"
+            echo "Error: Unknown argument '$1'"
+            echo "Usage: bash start_eval.sh --conf ./conf/config.yaml [--download]"
             echo ""
-            echo "选项:"
-            echo "  --conf PATH    指定配置文件路径 (默认: ./conf/config.yaml)"
-            echo "  --download     下载数据集 (默认: 不下载)"
+            echo "Options:"
+            echo "  --conf PATH    Specify config file path (default: ./conf/config.yaml)"
+            echo "  --download     Download dataset (default: do not download)"
             exit 1
             ;;
     esac
 done
 
-# 检查配置文件是否存在
+# Check if config file exists
 if [ ! -f "$CONFIG_PATH" ]; then
-    echo "错误: 配置文件不存在: $CONFIG_PATH"
+    echo "Error: Config file not found: $CONFIG_PATH"
     exit 1
 fi
 
 echo "======================================================"
-echo "  配置文件: $CONFIG_PATH"
-echo "  下载数据: $DOWNLOAD_DATA"
+echo "  Config: $CONFIG_PATH"
+echo "  Download Data: $DOWNLOAD_DATA"
 echo "======================================================"
 echo ""
 
-# 检查Python环境
+# Check Python environment
 if ! command -v python &> /dev/null; then
     echo "Error: Python not found!"
     echo "Please install Python 3.8 or higher."
     exit 1
 fi
 
-# 检查必要的Python包
+# Check necessary Python packages
 echo "Checking Python dependencies..."
 python -c "import yaml" 2>/dev/null || {
     echo "Installing PyYAML..."
