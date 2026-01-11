@@ -230,6 +230,15 @@ def main():
         result = task.copy()
         
         if task["is_segmentation"]:
+            # Mask任务 - 检查模型是否支持
+            if not model_dict.get('supports_mask', False):
+                print(f"\n⚠ Warning: Model {config['model']['name']} does not support mask tasks. Skipping...")
+                result["prediction"] = ""
+                result["J&F"] = 0.0
+                category_results[task["category"]]["mask"].append(0.0)
+                results.append(result)
+                continue
+            
             # Mask任务
             try:
                 answer, pred_masks = run_mask_task(
