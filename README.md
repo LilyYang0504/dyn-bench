@@ -32,10 +32,8 @@ conda activate bench
 # 安装依赖
 pip install torch torchvision  # 根据CUDA版本安装(仅作示例)
 
-pip install transformers
-pip install huggingface_hub
-pip install pyyaml numpy pillow tqdm scipy
-pip install hf_xet
+pip install transformers huggingface_hub hf_xet
+pip install pyyaml numpy pillow tqdm scipy peft einops timm
 ```
 
 ### 2. 配置
