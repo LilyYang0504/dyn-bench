@@ -1,0 +1,24 @@
+datasets:
+  repo_name: "LilyYang0504/BenchDatasets"
+  local_dir: "./datasets"
+
+model:
+  name: "ByteDance/Sa2VA-InternVL3-2B"
+  device: "cuda"
+  torch_dtype: "bfloat16"
+  use_flash_attn: true
+  trust_remote_code: true
+
+task:
+  # 任务类型: all, qa, mask
+  type: "all"
+  max_frames: null
+  limit: null
+
+evaluation:
+  boundary_threshold: 2
+
+output:
+  results_dir: "./results"
+  save_details: true
+  save_masks: true 
