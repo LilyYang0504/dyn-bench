@@ -36,7 +36,14 @@ pip install transformers huggingface_hub hf_xet
 pip install pyyaml numpy pillow tqdm scipy peft einops timm
 ```
 
-### 2. 配置
+### 2. 拉取仓库到本地
+```bash
+git clone https://github.com/LilyYang0504/Bench.git
+cd Bench
+```
+
+
+### 3. 配置
 
  `conf/config.yaml`：
 
@@ -50,7 +57,7 @@ task:
   type: "all"  # all / qa / mask
 ```
 
-### 3. 运行评测
+### 4. 运行评测
 
 ```bash
 # 首次评测需下载数据, 通过传入download参数实现
