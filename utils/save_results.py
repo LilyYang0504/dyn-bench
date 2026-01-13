@@ -79,7 +79,6 @@ def save_results(results: List[Dict], config: Dict, summary: Dict):
     
     with open(overall_file, 'w', encoding='utf-8') as f:
         f.write("=" * 60 + "\n")
-        f.write(f"  VSIBench Evaluation Results\n")
         f.write(f"  Model: {display_name}\n")
         f.write(f"  Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write("=" * 60 + "\n\n")
