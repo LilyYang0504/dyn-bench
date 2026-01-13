@@ -1,8 +1,3 @@
-"""
-QA任务执行模块
-支持多种多模态模型的QA任务推理
-"""
-
 from typing import List, Dict, Any, Optional
 import torch
 import numpy as np
@@ -71,6 +66,9 @@ def run_qa_task(
     
     elif model_type == "spatial_ladder":
         return _run_spatial_ladder_qa(model, processor, frame_paths, base_question)
+    
+    elif model_type == "spacer_sft":
+        return _run_spacer_sft_qa(model, processor, frame_paths, base_question)
     
     else:
         raise ValueError(f"Unsupported model type for QA: {model_type}")
@@ -393,6 +391,44 @@ def _run_spatial_ladder_qa(model, processor, frame_paths, question):
     inputs = inputs.to(model.device)
     
     # 推理
+    generated_ids = model.generate(**inputs, max_new_tokens=512)
+    generated_ids_trimmed = [
+        out_ids[len(in_ids):] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
+    ]
+    output_text = processor.batch_decode(
+        generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
+    )
+    
+    return output_text[0]
+
+
+def _run_spacer_sft_qa(model, processor, frame_paths, question):
+    """SpaceR-SFT QA推理（基于Qwen2.5-VL）"""
+    from qwen_vl_utils import process_vision_info
+    
+    images = [Image.open(p).convert('RGB') for p in frame_paths]
+    
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "video", "video": images},
+                {"type": "text", "text": question},
+            ],
+        }
+    ]
+    
+    text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    image_inputs, video_inputs = process_vision_info(messages)
+    inputs = processor(
+        text=[text],
+        images=image_inputs,
+        videos=video_inputs,
+        padding=True,
+        return_tensors="pt",
+    )
+    inputs = inputs.to(model.device)
+    
     generated_ids = model.generate(**inputs, max_new_tokens=512)
     generated_ids_trimmed = [
         out_ids[len(in_ids):] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)

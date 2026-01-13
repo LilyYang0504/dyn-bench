@@ -16,8 +16,14 @@ def save_results(results: List[Dict], config: Dict, summary: Dict):
     output_config = config['output']
     results_dir = Path(output_config['results_dir'])
     
-    # 获取模型名称的后半部分
-    model_name = config['model']['name'].split('/')[-1]
+    # 获取模型名称：优先使用 alias，否则使用 name
+    # 这样可以确保离线评测（使用本地路径）也能保存到正确的目录
+    model_alias = config['model'].get('alias', None)
+    if model_alias:
+        model_name = model_alias.split('/')[-1]
+    else:
+        model_name = config['model']['name'].split('/')[-1]
+    
     model_results_dir = results_dir / model_name
     
     # 创建目录
@@ -67,10 +73,14 @@ def save_results(results: List[Dict], config: Dict, summary: Dict):
     
     # 保存overall.txt
     overall_file = model_results_dir / "overall.txt"
+    
+    # 显示的模型名称：优先使用 alias，否则使用 name
+    display_name = model_alias if model_alias else config['model']['name']
+    
     with open(overall_file, 'w', encoding='utf-8') as f:
         f.write("=" * 60 + "\n")
         f.write(f"  VSIBench Evaluation Results\n")
-        f.write(f"  Model: {config['model']['name']}\n")
+        f.write(f"  Model: {display_name}\n")
         f.write(f"  Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write("=" * 60 + "\n\n")
         

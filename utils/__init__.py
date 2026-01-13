@@ -1,8 +1,3 @@
-"""
-VSIBench Utils Module
-包含数据加载、模型加载、任务加载和指标计算等工具函数
-"""
-
 from .load_datasets import download_dataset
 from .load_model import load_model
 from .load_tasks import load_all_tasks

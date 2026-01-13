@@ -1,4 +1,5 @@
 from typing import Dict, Any
+import os
 import torch
 from transformers import (
     AutoTokenizer, AutoModel, AutoProcessor, AutoModelForCausalLM,
@@ -8,12 +9,17 @@ from transformers import (
 )
 
 
+def is_local_path(path: str) -> bool:
+    """检测是否为本地路径"""
+    return os.path.exists(path) or os.path.sep in path or '\\' in path or '/' in path
+
+
 def get_model_type(model_name: str) -> str:
     """
     根据模型名称判断模型类型
     
     Args:
-        model_name: 模型名称
+        model_name: 模型名称或本地路径
     
     Returns:
         str: 模型类型
@@ -33,7 +39,38 @@ def get_model_type(model_name: str) -> str:
             - "vst": rayruiyang/VST-7B-RL
             - "spatial_ssrl": internlm/Spatial-SSRL-7B
             - "spatial_ladder": hongxingli/SpatialLadder-3B
+            - "spacer_sft": RUBBISHLIKE/SpaceR-SFT-3B/7B
     """
+    
+    # 检测是否为本地路径（包含路径分隔符或 models-- 格式）
+    import os
+    import re
+    
+    original_name = model_name
+    
+    # 如果是本地路径，尝试从路径中提取模型名称
+    if os.path.sep in model_name or '\\' in model_name or '/' in model_name:
+        # 查找 models--{org}--{model} 格式
+        match = re.search(r'models--([^\\\/]+)--([^\\\/]+)', model_name)
+        if match:
+            org = match.group(1)
+            model = match.group(2)
+            # 转换为标准格式 org/model
+            model_name = f"{org}/{model}"
+            print(f"  检测到本地路径，提取模型名称: {model_name}")
+        else:
+            # 尝试其他方式提取
+            # 例如从路径中查找常见组织名
+            for org in ['OpenGVLab', 'Qwen', 'ByteDance', 'lmms-lab', 'rayruiyang', 'internlm', 'hongxingli', 'RUBBISHLIKE']:
+                if org.lower() in model_name.lower():
+                    # 尝试提取模型部分
+                    parts = model_name.replace('\\', '/').split('/')
+                    for i, part in enumerate(parts):
+                        if org.lower() in part.lower() and i + 1 < len(parts):
+                            model_name = f"{org}/{parts[i+1]}"
+                            print(f"  检测到本地路径，提取模型名称: {model_name}")
+                            break
+                    break
     
     model_name_lower = model_name.lower()
     
@@ -67,8 +104,10 @@ def get_model_type(model_name: str) -> str:
         return "spatial_ssrl"
     elif "spatialladder" in model_name_lower:
         return "spatial_ladder"
+    elif "spacer-sft" in model_name_lower:
+        return "spacer_sft"
     else:
-        raise ValueError(f"Unknown model type for: {model_name}")
+        raise ValueError(f"Unknown model type for: {original_name}\n提取的模型名称: {model_name}")
 
 
 def load_model(config: Dict) -> Dict[str, Any]:
@@ -98,12 +137,28 @@ def load_model(config: Dict) -> Dict[str, Any]:
     model_name = config['model']['name']
     device = config['model']['device']
     cache_dir = config['model'].get('cache_dir', None)
+    
+    # 支持模型别名映射（用于匿名测试等场景）
+    # 如果设置了 alias，用 alias 来识别模型类型，但仍用 name 加载模型文件
+    model_alias = config['model'].get('alias', None)
+    
+    # 检测是否为本地路径
+    local_files_only = is_local_path(model_name)
+    if local_files_only:
+        print(f"  检测到本地路径: {model_name}")
 
     print(f"\nLoading model from {model_name}...")
-
-    # 判断模型类型
-    model_type = get_model_type(model_name)
-    print(f"  Model type: {model_type}")
+    
+    # 判断模型类型：
+    # - 如果设置了 alias，从 alias 检测类型（推荐用于匿名测试）
+    # - 否则从 name 直接检测
+    if model_alias:
+        print(f"  Model alias: {model_name} -> {model_alias}")
+        model_type = get_model_type(model_alias)
+        print(f"  Model type (from alias): {model_type}")
+    else:
+        model_type = get_model_type(model_name)
+        print(f"  Model type (auto-detected): {model_type}")
 
     # 获取torch数据类型
     torch_dtype_str = config['model'].get('torch_dtype', 'bfloat16')
@@ -130,12 +185,13 @@ def load_model(config: Dict) -> Dict[str, Any]:
             use_flash_attn=use_flash_attn,
             trust_remote_code=trust_remote_code,
             device_map="auto",
-            cache_dir=cache_dir
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
         ).eval()
         if model_type == "sa2va_qwen3":
-            processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True, cache_dir=cache_dir)
+            processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True, cache_dir=cache_dir, local_files_only=local_files_only)
         else:
-            tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, use_fast=False, cache_dir=cache_dir)
+            tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, use_fast=False, cache_dir=cache_dir, local_files_only=local_files_only)
 
     # InternVL3系列
     elif model_type in ["internvl3", "internvl3_5"]:
@@ -146,9 +202,10 @@ def load_model(config: Dict) -> Dict[str, Any]:
             use_flash_attn=use_flash_attn,
             trust_remote_code=trust_remote_code,
             device_map="auto",
-            cache_dir=cache_dir
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
         ).eval()
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, use_fast=False, cache_dir=cache_dir)
+        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, use_fast=False, cache_dir=cache_dir, local_files_only=local_files_only)
 
     # Qwen2.5-VL系列
     elif model_type == "qwen2_5_vl":
@@ -156,10 +213,11 @@ def load_model(config: Dict) -> Dict[str, Any]:
             model_name,
             torch_dtype=torch_dtype,
             device_map="auto",
-            cache_dir=cache_dir
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
         )
         # 使用默认的processor参数
-        processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir)
+        processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir, local_files_only=local_files_only)
 
     # Qwen3-VL系列
     elif model_type == "qwen3_vl":
@@ -167,9 +225,10 @@ def load_model(config: Dict) -> Dict[str, Any]:
             model_name,
             dtype=torch_dtype,
             device_map="auto",
-            cache_dir=cache_dir
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
         )
-        processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir)
+        processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir, local_files_only=local_files_only)
 
     # Qwen3-VL-MoE (235B-A22B)
     elif model_type == "qwen3_vl_moe":
@@ -177,9 +236,10 @@ def load_model(config: Dict) -> Dict[str, Any]:
             model_name,
             dtype=torch_dtype,
             device_map="auto",
-            cache_dir=cache_dir
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
         )
-        processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir)
+        processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir, local_files_only=local_files_only)
 
     # LLaVA-OneVision
     elif model_type == "llava_onevision":
@@ -188,9 +248,10 @@ def load_model(config: Dict) -> Dict[str, Any]:
             torch_dtype=torch_dtype,
             device_map="auto",
             trust_remote_code=trust_remote_code,
-            cache_dir=cache_dir
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
         )
-        processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True, cache_dir=cache_dir)
+        processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True, cache_dir=cache_dir, local_files_only=local_files_only)
 
     # VST-7B-RL (基于Qwen2.5-VL)
     elif model_type == "vst":
@@ -199,14 +260,16 @@ def load_model(config: Dict) -> Dict[str, Any]:
             torch_dtype=torch_dtype,
             attn_implementation="flash_attention_2" if use_flash_attn else "eager",
             device_map="auto",
-            cache_dir=cache_dir
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
         )
         # VST使用特定的pixel范围
         processor = AutoProcessor.from_pretrained(
             model_name,
             min_pixels=256*28*28,
             max_pixels=1280*28*28,
-            cache_dir=cache_dir
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
         )
 
     # Spatial-SSRL-7B (基于Qwen2.5-VL)
@@ -215,9 +278,10 @@ def load_model(config: Dict) -> Dict[str, Any]:
             model_name,
             torch_dtype=torch_dtype,
             device_map="auto",
-            cache_dir=cache_dir
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
         )
-        processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir)
+        processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir, local_files_only=local_files_only)
 
     # SpatialLadder-3B (基于Qwen2.5-VL)
     elif model_type == "spatial_ladder":
@@ -226,9 +290,21 @@ def load_model(config: Dict) -> Dict[str, Any]:
             torch_dtype=torch_dtype,
             attn_implementation="flash_attention_2" if use_flash_attn else "eager",
             device_map="auto",
-            cache_dir=cache_dir
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
         )
-        processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir)
+        processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir, local_files_only=local_files_only)
+    
+    # SpaceR-SFT (基于Qwen2.5-VL)
+    elif model_type == "spacer_sft":
+        model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            model_name,
+            torch_dtype=torch_dtype,
+            device_map="auto",
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
+        )
+        processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir, local_files_only=local_files_only)
     
     if model is None:
         raise ValueError(f"Failed to load model: {model_name}")

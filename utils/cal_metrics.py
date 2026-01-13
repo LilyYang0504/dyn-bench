@@ -13,12 +13,6 @@ def fuzzy_matching(pred: str) -> str:
     
     Returns:
         str: 提取的选项字母（大写）
-    
-    Example:
-        >>> fuzzy_matching("A. The answer is...")
-        'A'
-        >>> fuzzy_matching("The answer is B")
-        'B'
     """
     pred = pred.strip()
     if not pred:
@@ -73,10 +67,6 @@ def compute_iou(pred_mask: np.ndarray, gt_mask: np.ndarray) -> float:
 def compute_boundary_f1(pred_mask: np.ndarray, gt_mask: np.ndarray, bound_th: int = 2) -> float:
     """
     计算边界F1分数
-    
-    边界F1评估分割掩码边界的精确度，通过形态学操作提取边界，
-    然后计算预测边界和GT边界之间的精确率和召回率
-    
     Args:
         pred_mask: 预测掩码 (binary array)
         gt_mask: Ground Truth掩码 (binary array)
@@ -179,12 +169,7 @@ def compute_jf_score(pred_masks: List[np.ndarray], gt_masks: List[np.ndarray],
                      bound_th: int = 2) -> Dict[str, float]:
     """
     计算J&F分数（Jaccard & F-measure）
-    
-    J&F是视频对象分割的标准评估指标，结合了：
-    - J (Jaccard): 区域相似度（IoU）
-    - F (F-measure): 边界准确度（Boundary F1）
-    - J&F: 两者的平均值
-    
+        
     Args:
         pred_masks: 预测掩码列表
         gt_masks: Ground Truth掩码列表
