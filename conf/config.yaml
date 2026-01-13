@@ -3,15 +3,17 @@ datasets:
   local_dir: "./datasets"
 
 model:
-  name: "ByteDance/Sa2VA-InternVL3-2B"
+  name: "E:/test_down/Qwen-VL-235B-A22B-Instruct_0001/snapshots/7d7bd7bcc35b77b391883ebd7f9686cfa0e25cc0"
+  alias: "OpenGVLab/InternVL3_5-2B"
   device: "cuda"
   torch_dtype: "bfloat16"
   use_flash_attn: true
   trust_remote_code: true
+  cache_dir: null
+  
 
 task:
-  # 任务类型: all, qa, mask
-  type: "all"
+  type: "qa"  # all, qa, mask
   max_frames: null
   limit: null
 
