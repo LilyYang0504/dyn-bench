@@ -58,6 +58,9 @@ def run_qa_task(
     elif model_type == "llava_onevision":
         return _run_llava_onevision_qa(model, processor, frame_paths, base_question)
     
+    elif model_type == "unipixel":
+        return _run_unipixel_qa(model, processor, frame_paths, base_question)
+    
     elif model_type == "vst":
         return _run_vst_qa(model, processor, frame_paths, base_question)
     
@@ -436,5 +439,15 @@ def _run_spacer_sft_qa(model, processor, frame_paths, question):
     output_text = processor.batch_decode(
         generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
     )
+    
+    return output_text[0]
+
+
+def _run_unipixel_qa(model, processor, frame_paths: List[str], question: str) -> str:
+    """UniPixel QA 推理"""
+    from utils.unipixel_helper import run_unipixel_qa
+    
+    response = run_unipixel_qa(model, processor, frame_paths, question)
+    return response
     
     return output_text[0]

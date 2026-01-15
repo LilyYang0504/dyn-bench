@@ -5,6 +5,40 @@ from collections import defaultdict
 from datetime import datetime
 
 
+def get_display_name_for_results(config: Dict) -> tuple:
+    """
+    获取用于显示和保存的模型名称
+    
+    Returns:
+        tuple: (dir_name, display_name)
+            - dir_name: 用于目录名（只取最后部分）
+            - display_name: 用于显示的完整名称
+    """
+    model_config = config.get('model', {})
+    model_name = model_config.get('name', '')
+    model_alias = model_config.get('alias', None)
+    
+    # 如果有 alias，使用 alias
+    if model_alias:
+        display_name = model_alias
+        dir_name = model_alias.split('/')[-1]
+    else:
+        # 没有 alias，尝试从路径提取或直接使用 name
+        from .load_model import extract_model_name_from_path, is_local_path
+        
+        if is_local_path(model_name):
+            # 从本地路径提取
+            extracted = extract_model_name_from_path(model_name)
+            display_name = extracted
+            dir_name = extracted.split('/')[-1]
+        else:
+            # HuggingFace 名称
+            display_name = model_name
+            dir_name = model_name.split('/')[-1]
+    
+    return dir_name, display_name
+
+
 def save_results(results: List[Dict], config: Dict, summary: Dict):
     """
     Args:
@@ -16,15 +50,10 @@ def save_results(results: List[Dict], config: Dict, summary: Dict):
     output_config = config['output']
     results_dir = Path(output_config['results_dir'])
     
-    # 获取模型名称：优先使用 alias，否则使用 name
-    # 这样可以确保离线评测（使用本地路径）也能保存到正确的目录
-    model_alias = config['model'].get('alias', None)
-    if model_alias:
-        model_name = model_alias.split('/')[-1]
-    else:
-        model_name = config['model']['name'].split('/')[-1]
+    # 获取显示名称和目录名
+    dir_name, display_name = get_display_name_for_results(config)
     
-    model_results_dir = results_dir / model_name
+    model_results_dir = results_dir / dir_name
     
     # 创建目录
     qa_details_dir = model_results_dir / "qa_details"
@@ -73,9 +102,6 @@ def save_results(results: List[Dict], config: Dict, summary: Dict):
     
     # 保存overall.txt
     overall_file = model_results_dir / "overall.txt"
-    
-    # 显示的模型名称：优先使用 alias，否则使用 name
-    display_name = model_alias if model_alias else config['model']['name']
     
     with open(overall_file, 'w', encoding='utf-8') as f:
         f.write("=" * 60 + "\n")

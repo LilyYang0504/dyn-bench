@@ -35,6 +35,11 @@ def run_mask_task(
     # 加载图像
     images = [Image.open(p).convert('RGB') for p in frame_paths]
     
+    # UniPixel 特殊处理
+    if model_type == "unipixel":
+        from utils.unipixel_helper import run_unipixel_mask
+        return run_unipixel_mask(model, processor, frame_paths, question)
+    
     # 根据模型类型构建提示词
     if model_type == "sa2va":
         # Sa2VA系列：不需要<image>标签

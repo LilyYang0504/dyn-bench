@@ -9,6 +9,32 @@ from transformers import (
 )
 
 
+def extract_model_name_from_path(path: str) -> str:
+    """
+    从本地路径提取标准模型名称
+    
+    支持格式：
+    - models--{org}--{model}/snapshots/... → {org}/{model}
+    - 普通路径 → 使用目录名
+    
+    Args:
+        path: 本地路径
+    
+    Returns:
+        str: 提取的模型名称
+    """
+    import re
+    
+    # 处理 HuggingFace cache 格式: models--{org}--{model}
+    match = re.search(r'models--([^/\\]+)--([^/\\]+)', path)
+    if match:
+        org, model = match.groups()
+        return f"{org}/{model}"
+    
+    # 否则返回最后一级目录名
+    return os.path.basename(path.rstrip('/\\'))
+
+
 def is_local_path(path: str) -> bool:
     """检测是否为本地路径"""
     return os.path.exists(path) or os.path.sep in path or '\\' in path or '/' in path
@@ -84,6 +110,10 @@ def get_model_type(model_name: str) -> str:
             return "sa2va_internvl3"
         else:
             return "sa2va"
+    
+    # UniPixel 模型
+    elif "polyu-chenlab/unipixel" in model_name_lower or "unipixel" in model_name_lower:
+        return "unipixel"
     
     # 新增的纯QA模型
     elif "opengvlab/internvl3_5" in model_name_lower or "opengvlab/internvl3.5" in model_name_lower:
@@ -305,6 +335,19 @@ def load_model(config: Dict) -> Dict[str, Any]:
             local_files_only=local_files_only
         )
         processor = AutoProcessor.from_pretrained(model_name, cache_dir=cache_dir, local_files_only=local_files_only)
+    
+    # UniPixel (使用自定义加载器)
+    elif model_type == "unipixel":
+        from utils.unipixel_helper import load_unipixel_model
+        supports_mask = True
+        model, processor = load_unipixel_model(
+            model_name=model_name,
+            device=device,
+            cache_dir=cache_dir,
+            local_files_only=local_files_only
+        )
+        # UniPixel 不使用 tokenizer，只用 processor
+        tokenizer = None
     
     if model is None:
         raise ValueError(f"Failed to load model: {model_name}")
