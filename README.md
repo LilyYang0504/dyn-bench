@@ -150,6 +150,81 @@ bash start_eval.sh --conf ./conf/config.yaml
 
 ---
 
+## ⚙️ 性能优化说明
+
+### GPU 显存优化
+
+代码已针对大规模模型（如 InternVL3-14B、InternVL3-78B）进行了显存优化，支持在 H200 (140GB) 等高性能 GPU 上评测。
+
+#### 自动优化特性
+
+✅ **低内存加载**: 所有模型使用 `low_cpu_mem_usage=True` 减少内存碎片  
+✅ **自动设备分配**: `device_map="auto"` 自动将模型分配到 GPU  
+✅ **显存缓存清理**: 每个样本评测后自动调用 `torch.cuda.empty_cache()`  
+✅ **Flash Attention 2**: 支持 FlashAttention-2 优化（需在配置中启用）
+
+#### 显存使用监控
+
+模型加载完成后会自动显示 GPU 显存使用情况：
+
+```
+✓ Model loaded successfully!
+  GPU Memory allocated: 28.45 GB
+  GPU Memory reserved: 29.12 GB
+```
+
+#### H200 (140GB) 显存使用参考
+
+| 模型规模 | 精度 | 预估显存占用 | 状态 |
+|---------|------|-------------|------|
+| 1B-4B 模型 | bfloat16 | ~3-8 GB | ✅ 轻松运行 |
+| 7B-14B 模型 | bfloat16 | ~14-35 GB | ✅ 推荐配置 |
+| 32B-38B 模型 | bfloat16 | ~65-85 GB | ✅ 可运行 |
+| 72B-78B 模型 | bfloat16 | ~140+ GB | ⚠️ 接近上限 |
+
+#### 推荐配置
+
+```yaml
+model:
+  torch_dtype: "bfloat16"  # 推荐：平衡精度和显存
+  use_flash_attn: true     # 可选：启用 Flash Attention（节省显存）
+  device: "cuda"
+  cache_dir: null
+```
+
+#### 如遇显存不足 (OOM)
+
+**关键优化 (已自动配置)**：
+```bash
+# start_eval.sh 已自动设置此环境变量
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+```
+
+此配置可减少显存碎片化，解决"32GB+ 保留但未分配"的问题。
+
+**其他优化措施**：
+1. **确认精度设置**: 使用 `bfloat16` 而非 `float32`（可节省 50% 显存）
+2. **启用 Flash Attention**: 设置 `use_flash_attn: true`（可节省 20-30% 显存）
+3. **降低视频帧数**: 减少 `max_frames` 参数（适用于视频任务）
+4. **手动清理缓存**: 在配置中启用自动缓存清理（已默认开启）
+
+**如果仍然 OOM**：
+```bash
+# 手动设置更激进的内存管理
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:512
+```
+
+**示例：H200 运行 InternVL3-14B**
+```yaml
+model:
+  name: "OpenGVLab/InternVL3-14B"
+  torch_dtype: "bfloat16"
+  device: "cuda"
+```
+预期显存占用：~28-35 GB (远低于 140GB 上限)
+
+---
+
 ## 📝 匿名测试说明
 
 匿名测试允许您将模型文件夹重命名为任意名称（如 `mymodel1`、`modelA`），通过 `alias` 字段映射到标准模型名称。

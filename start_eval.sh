@@ -91,6 +91,11 @@ echo "Starting evaluation..."
 echo "=============================================="
 echo ""
 
+# Set PyTorch CUDA memory allocator to avoid fragmentation
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+echo "✓ Set PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"
+echo ""
+
 CMD="python eval.py --config \"$CONFIG_PATH\""
 
 if [ "$DOWNLOAD_DATA" = true ]; then

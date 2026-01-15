@@ -7,6 +7,9 @@ from datetime import datetime
 from typing import Dict, List
 from collections import OrderedDict, defaultdict
 
+# 设置 PyTorch CUDA 内存分配器，避免碎片化导致 OOM
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
@@ -134,6 +137,12 @@ def main():
     
     print(f"✓ Model loaded successfully (Type: {model_type})")
     
+    # 清理模型加载过程中的显存碎片
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        print(f"  GPU Memory allocated: {torch.cuda.memory_allocated() / 1024**3:.2f} GB")
+        print(f"  GPU Memory reserved: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")
+    
     # 准备结果保存目录
     results_dir = Path(config['output']['results_dir'])
     dir_name, _ = get_display_name_for_results(config)
@@ -249,6 +258,10 @@ def main():
                 category_results[task["category"]]["qa"].append(0.0)
         
         results.append(result)
+        
+        # 清理显存缓存（防止OOM）
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
     
     # 汇总结果
     print(f"\n{'='*60}")
