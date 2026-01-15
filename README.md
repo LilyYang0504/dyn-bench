@@ -17,12 +17,13 @@
 
 ### 支持 QA + Mask 任务的模型
 
-| 模型系列 | 模型规模 | HuggingFace模型ID |
-|---------|---------|------------------|
-| **Sa2VA** | 1B / 4B / 8B | `ByteDance/Sa2VA-{1B,4B,8B}` |
-| **Sa2VA-InternVL3** | 2B / 8B / 14B | `ByteDance/Sa2VA-InternVL3-{2B,8B,14B}` |
-| **Sa2VA-Qwen2_5-VL** | 3B / 7B | `ByteDance/Sa2VA-Qwen2_5-VL-{3B,7B}` |
-| **Sa2VA-Qwen3-VL** | 2B / 4B | `ByteDance/Sa2VA-Qwen3-VL-{2B,4B}` |
+| 模型系列 | 模型规模 | HuggingFace模型ID | 备注 |
+|---------|---------|------------------|------|
+| **Sa2VA** | 1B / 4B / 8B | `ByteDance/Sa2VA-{1B,4B,8B}` | |
+| **Sa2VA-InternVL3** | 2B / 8B / 14B | `ByteDance/Sa2VA-InternVL3-{2B,8B,14B}` | |
+| **Sa2VA-Qwen2_5-VL** | 3B / 7B | `ByteDance/Sa2VA-Qwen2_5-VL-{3B,7B}` | |
+| **Sa2VA-Qwen3-VL** | 2B / 4B | `ByteDance/Sa2VA-Qwen3-VL-{2B,4B}` | |
+| **UniPixel** | 3B / 7B | `PolyU-ChenLab/UniPixel-{3B,7B}` | 需要额外安装 |
 
 ### 仅支持 QA 任务的模型
 
@@ -157,6 +158,65 @@ bash start_eval.sh --conf ./conf/config.yaml
 ### 支持的标准模型名称（用于 alias）
 
 - **Sa2VA**: `ByteDance/Sa2VA-{1B,4B,8B}`, `ByteDance/Sa2VA-InternVL3-{2B,8B,14B}`, `ByteDance/Sa2VA-Qwen2_5-VL-{3B,7B}`, `ByteDance/Sa2VA-Qwen3-VL-{2B,4B}`
+- **UniPixel**: `PolyU-ChenLab/UniPixel-{3B,7B}`
 - **InternVL**: `OpenGVLab/InternVL3-{1B,2B,8B,78B}`, `OpenGVLab/InternVL3_5-{1B,2B,4B,8B,14B,38B}`
 - **Qwen**: `Qwen/Qwen2.5-VL-{3B,7B,32B,72B}-Instruct`, `Qwen/Qwen3-VL-{2B,4B,8B,32B}-Instruct`
 - **其他**: `lmms-lab/LLaVA-OneVision-*`, `rayruiyang/VST-7B-RL`, `internlm/Spatial-SSRL-7B`, `RUBBISHLIKE/SpaceR-SFT-{3B,7B}`
+
+---
+
+## 🔧 UniPixel 模型特殊说明
+
+UniPixel 模型需要额外的安装步骤，因为它使用自定义的模型库。
+
+### 安装 UniPixel 依赖
+
+```bash
+# 1. 克隆 UniPixel 仓库到 thirdparty 目录
+mkdir -p thirdparty
+cd thirdparty
+git clone https://github.com/PolyU-ChenLab/UniPixel.git
+
+# 2. 安装依赖（Windows 需跳过 deepspeed 和 triton）
+cd UniPixel
+
+# Linux/Mac:
+pip install -r requirements.txt
+```
+
+### 下载 UniPixel 模型
+
+```bash
+python download_model.py --model PolyU-ChenLab/UniPixel-3B --cache-dir ./models
+
+python download_model.py --model PolyU-ChenLab/UniPixel-7B --cache-dir ./models
+```
+
+### 使用 UniPixel
+
+**在线评测**:
+```yaml
+# config.yaml
+model:
+  name: "PolyU-ChenLab/UniPixel-3B"  # 自动下载
+  alias: null  # 自动使用标准名称
+  cache_dir: "./models"
+```
+
+**离线评测**:
+```yaml
+# config.yaml
+model:
+  name: "./models/models--PolyU-ChenLab--UniPixel-3B/snapshots/<hash>"
+  alias: null  # 自动从路径提取 "PolyU-ChenLab/UniPixel-3B"
+  cache_dir: null
+```
+
+**匿名测评** (保持标准名称):
+```yaml
+# 将模型文件夹重命名为 mymodel1，但结果使用标准名称
+model:
+  name: "./models/mymodel1"
+  alias: "PolyU-ChenLab/UniPixel-3B"  # 显式指定
+  cache_dir: null
+```
