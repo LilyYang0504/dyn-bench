@@ -10,6 +10,7 @@ from collections import OrderedDict, defaultdict
 # 设置 PyTorch CUDA 内存分配器，避免碎片化导致 OOM
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
+import torch
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
