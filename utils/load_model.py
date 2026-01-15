@@ -9,6 +9,15 @@ from transformers import (
 )
 
 
+def is_flash_attn_available():
+    """检测 flash-attn 是否可用"""
+    try:
+        import flash_attn
+        return True
+    except ImportError:
+        return False
+
+
 def extract_model_name_from_path(path: str) -> str:
     """
     从本地路径提取标准模型名称
@@ -197,7 +206,19 @@ def load_model(config: Dict) -> Dict[str, Any]:
     else:
         torch_dtype = getattr(torch, torch_dtype_str)
 
+    # Flash Attention 配置
     use_flash_attn = config['model'].get('use_flash_attn', True)
+    flash_attn_available = is_flash_attn_available()
+    
+    # 如果配置要求使用但未安装，发出警告并降级
+    if use_flash_attn and not flash_attn_available:
+        print("⚠ Warning: Flash Attention requested but not installed. Falling back to eager attention.")
+        print("  Install with: pip install flash-attn --no-build-isolation")
+        use_flash_attn = False
+    
+    # 确定 attn_implementation 参数
+    attn_implementation = "flash_attention_2" if use_flash_attn else "eager"
+    
     trust_remote_code = config['model'].get('trust_remote_code', True)
 
     model = None
@@ -212,7 +233,7 @@ def load_model(config: Dict) -> Dict[str, Any]:
             model_name,
             torch_dtype=torch_dtype,
             low_cpu_mem_usage=True,
-            use_flash_attn=use_flash_attn,
+            attn_implementation=attn_implementation,
             trust_remote_code=trust_remote_code,
             device_map="auto",
             cache_dir=cache_dir,
@@ -229,7 +250,7 @@ def load_model(config: Dict) -> Dict[str, Any]:
             model_name,
             torch_dtype=torch_dtype,
             low_cpu_mem_usage=True,
-            use_flash_attn=use_flash_attn,
+            attn_implementation=attn_implementation,
             trust_remote_code=trust_remote_code,
             device_map="auto",
             cache_dir=cache_dir,
@@ -242,6 +263,8 @@ def load_model(config: Dict) -> Dict[str, Any]:
         model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_name,
             torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+            attn_implementation=attn_implementation,
             device_map="auto",
             cache_dir=cache_dir,
             local_files_only=local_files_only
@@ -253,7 +276,9 @@ def load_model(config: Dict) -> Dict[str, Any]:
     elif model_type == "qwen3_vl":
         model = Qwen3VLForConditionalGeneration.from_pretrained(
             model_name,
-            dtype=torch_dtype,
+            torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+            attn_implementation=attn_implementation,
             device_map="auto",
             cache_dir=cache_dir,
             local_files_only=local_files_only
@@ -264,7 +289,9 @@ def load_model(config: Dict) -> Dict[str, Any]:
     elif model_type == "qwen3_vl_moe":
         model = Qwen3VLMoeForConditionalGeneration.from_pretrained(
             model_name,
-            dtype=torch_dtype,
+            torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+            attn_implementation=attn_implementation,
             device_map="auto",
             cache_dir=cache_dir,
             local_files_only=local_files_only
@@ -276,6 +303,8 @@ def load_model(config: Dict) -> Dict[str, Any]:
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+            attn_implementation=attn_implementation,
             device_map="auto",
             trust_remote_code=trust_remote_code,
             cache_dir=cache_dir,
@@ -288,7 +317,8 @@ def load_model(config: Dict) -> Dict[str, Any]:
         model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_name,
             torch_dtype=torch_dtype,
-            attn_implementation="flash_attention_2" if use_flash_attn else "eager",
+            low_cpu_mem_usage=True,
+            attn_implementation=attn_implementation,
             device_map="auto",
             cache_dir=cache_dir,
             local_files_only=local_files_only
@@ -307,6 +337,8 @@ def load_model(config: Dict) -> Dict[str, Any]:
         model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_name,
             torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+            attn_implementation=attn_implementation,
             device_map="auto",
             cache_dir=cache_dir,
             local_files_only=local_files_only
@@ -318,7 +350,8 @@ def load_model(config: Dict) -> Dict[str, Any]:
         model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_name,
             torch_dtype=torch_dtype,
-            attn_implementation="flash_attention_2" if use_flash_attn else "eager",
+            low_cpu_mem_usage=True,
+            attn_implementation=attn_implementation,
             device_map="auto",
             cache_dir=cache_dir,
             local_files_only=local_files_only
@@ -330,6 +363,8 @@ def load_model(config: Dict) -> Dict[str, Any]:
         model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_name,
             torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+            attn_implementation=attn_implementation,
             device_map="auto",
             cache_dir=cache_dir,
             local_files_only=local_files_only
@@ -359,7 +394,7 @@ def load_model(config: Dict) -> Dict[str, Any]:
         print(f"✓ Model and tokenizer loaded successfully!")
     
     print(f"  - Precision: {torch_dtype_str}")
-    print(f"  - Flash Attention: {use_flash_attn}")
+    print(f"  - Flash Attention: {attn_implementation} {'✓' if attn_implementation == 'flash_attention_2' else '(eager fallback)'}")
     print(f"  - Supports Mask: {supports_mask}")
     
     return {

@@ -114,6 +114,10 @@ def _run_internvl_qa(model, tokenizer, frame_paths, question):
     """InternVL3/3.5系列QA推理"""
     from .video_utils import load_video_frames_for_internvl
     
+    # 清理缓存，避免内存碎片化
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    
     # 加载视频帧
     pixel_values, num_patches_list = load_video_frames_for_internvl(frame_paths)
     pixel_values = pixel_values.to(torch.bfloat16).to(model.device)
@@ -122,8 +126,8 @@ def _run_internvl_qa(model, tokenizer, frame_paths, question):
     video_prefix = ''.join([f'Frame{i+1}: <image>\n' for i in range(len(num_patches_list))])
     full_question = video_prefix + question
     
-    # 生成配置
-    generation_config = dict(max_new_tokens=512, do_sample=False)
+    # 生成配置 - 降低 max_new_tokens 以减少显存占用
+    generation_config = dict(max_new_tokens=128, do_sample=False)
     
     # 推理
     response = model.chat(
