@@ -12,7 +12,7 @@ from PIL import Image
 from tqdm import tqdm
 
 from utils.load_datasets import download_dataset, verify_dataset_structure
-from utils.load_model import load_model
+from utils.load_model import load_model, extract_model_name_from_path, is_local_path
 from utils.load_tasks import load_all_tasks, get_task_statistics
 from utils.cal_metrics import (
     compute_qa_accuracy,
@@ -23,7 +23,7 @@ from utils.cal_metrics import (
 )
 from utils.run_qa_task import run_qa_task
 from utils.run_mask_task import run_mask_task
-from utils.save_results import save_results
+from utils.save_results import save_results, get_display_name_for_results
 
 
 def load_config(config_path: str = "conf/config.yaml") -> Dict:
@@ -72,10 +72,23 @@ def main():
         return
     
     # 显示配置信息
+    model_name = config['model']['name']
+    model_alias = config['model'].get('alias', None)
+    
+    # 获取显示名称（用于输出）
+    if model_alias:
+        display_alias = model_alias
+    elif is_local_path(model_name):
+        display_alias = extract_model_name_from_path(model_name)
+    else:
+        display_alias = model_name
+    
     print(f"\n{'='*60}")
     print(f"Configuration:")
     print(f"  Datasets: {datasets_dir}")
-    print(f"  Model: {config['model']['name']}")
+    print(f"  Model: {model_name}")
+    if model_alias or (is_local_path(model_name) and display_alias != model_name):
+        print(f"  Alias: {display_alias}")
     print(f"  Task Type: {config['task']['type']}")
     print(f"  Device: {config['model']['device']}")
     print(f"{'='*60}")
@@ -123,8 +136,8 @@ def main():
     
     # 准备结果保存目录
     results_dir = Path(config['output']['results_dir'])
-    model_name = config['model']['name'].split('/')[-1]
-    mask_output_dir = results_dir / model_name / "mask_details"
+    dir_name, _ = get_display_name_for_results(config)
+    mask_output_dir = results_dir / dir_name / "mask_details"
     
     # 运行评估
     print(f"\n{'='*60}")

@@ -24,6 +24,10 @@ def get_model_type(model_name: str) -> str:
         else:
             return "sa2va"
     
+    # UniPixel 模型
+    elif "polyu-chenlab/unipixel" in model_name_lower:
+        return "unipixel"
+    
     # 新增的纯QA模型
     elif "opengvlab/internvl3_5" in model_name_lower or "opengvlab/internvl3.5" in model_name_lower:
         return "internvl3_5"
@@ -98,14 +102,24 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用示例:
-  # 使用默认缓存路径（HF_HOME 环境变量）
+  # 下载标准模型
   python download_model.py --model "OpenGVLab/InternVL3_5-2B"
+  
+  # 下载 UniPixel 模型
+  python download_model.py --model "PolyU-ChenLab/UniPixel-3B"
   
   # 指定自定义缓存路径
   python download_model.py --model "OpenGVLab/InternVL3_5-2B" --cache-dir "E:/hf-download"
   
   # 批量下载多个模型
-  python download_model.py --model "OpenGVLab/InternVL3_5-2B" "Qwen/Qwen2.5-VL-7B-Instruct"
+  python download_model.py --model "OpenGVLab/InternVL3_5-2B" "Qwen/Qwen2.5-VL-7B-Instruct" "PolyU-ChenLab/UniPixel-3B"
+
+支持的模型:
+  - Sa2VA 系列: ByteDance/Sa2VA-*
+  - UniPixel: PolyU-ChenLab/UniPixel-{3B,7B}
+  - InternVL: OpenGVLab/InternVL*
+  - Qwen: Qwen/Qwen*-VL-*
+  - 其他: 见 README.md
 
 环境变量设置:
   Windows (PowerShell):  $env:HF_HOME="E:/hf-download"
