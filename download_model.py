@@ -1,5 +1,6 @@
 import os
 import argparse
+from colorama import Fore, init
 from huggingface_hub import snapshot_download
 from transformers import (
     AutoModel, AutoTokenizer, AutoProcessor, AutoModelForCausalLM,
@@ -7,13 +8,12 @@ from transformers import (
     Qwen3VLForConditionalGeneration,
     Qwen3VLMoeForConditionalGeneration
 )
+init(autoreset=True)
 
 
 def get_model_type(model_name: str) -> str:
-    """根据模型名称判断模型类型"""
     model_name_lower = model_name.lower()
     
-    # Sa2VA系列
     if "bytedance/sa2va" in model_name_lower:
         if "qwen3-vl" in model_name_lower:
             return "sa2va_qwen3"
@@ -24,11 +24,9 @@ def get_model_type(model_name: str) -> str:
         else:
             return "sa2va"
     
-    # UniPixel 模型
     elif "polyu-chenlab/unipixel" in model_name_lower:
         return "unipixel"
     
-    # 新增的纯QA模型
     elif "opengvlab/internvl3_5" in model_name_lower or "opengvlab/internvl3.5" in model_name_lower:
         return "internvl3_5"
     elif "opengvlab/internvl3" in model_name_lower:
@@ -54,78 +52,34 @@ def get_model_type(model_name: str) -> str:
 
 
 def download_model(model_name: str, cache_dir: str = None):
-    """
-    下载模型到本地缓存（包括所有权重文件）
+
+    print(f"Start to download model: {model_name}")
+    print(f"Cache directory: {cache_dir if cache_dir else 'HF default path'}")
     
-    Args:
-        model_name: HuggingFace 模型名称
-        cache_dir: 缓存目录路径（可选，默认使用 HF_HOME 环境变量）
-    """
-    print(f"\n{'='*60}")
-    print(f"开始下载模型: {model_name}")
-    print(f"缓存目录: {cache_dir if cache_dir else 'HF 默认路径 (通过 HF_HOME 设置)'}")
-    print(f"{'='*60}\n")
-    
-    # 判断模型类型
     model_type = get_model_type(model_name)
-    print(f"检测到模型类型: {model_type}\n")
+    print(f"Detected model type: {model_type}")
     
     try:
-        # 使用 snapshot_download 下载完整模型（所有文件）
-        print("📥 下载完整模型文件（包括权重、配置、tokenizer 等）...")
-        print("   这可能需要几分钟到几小时，取决于模型大小和网络速度...\n")
-        
         local_path = snapshot_download(
             repo_id=model_name,
             cache_dir=cache_dir,
-            resume_download=True,  # 支持断点续传
+            resume_download=True,
             local_files_only=False
         )
         
-        print(f"\n{'='*60}")
-        print(f"✅ 模型下载成功: {model_name}")
-        print(f"{'='*60}\n")
+        print(f"{Fore.GREEN}Model downloaded successfully: {model_name}")
         
-        # 打印实际保存位置
-        print(f"📁 模型已保存到:")
-        print(f"   {local_path}\n")
+        print(f"{Fore.CYAN}Model saved to: {local_path}")
         
         
     except Exception as e:
-        print(f"\n❌ 模型下载失败: {e}")
-        raise
+        raise RuntimeError(f"Failed to download model: {model_name}\n{e}")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="下载 HuggingFace 模型到本地缓存以支持离线评测",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-使用示例:
-  # 下载标准模型
-  python download_model.py --model "OpenGVLab/InternVL3_5-2B"
-  
-  # 下载 UniPixel 模型
-  python download_model.py --model "PolyU-ChenLab/UniPixel-3B"
-  
-  # 指定自定义缓存路径
-  python download_model.py --model "OpenGVLab/InternVL3_5-2B" --cache-dir "E:/hf-download"
-  
-  # 批量下载多个模型
-  python download_model.py --model "OpenGVLab/InternVL3_5-2B" "Qwen/Qwen2.5-VL-7B-Instruct" "PolyU-ChenLab/UniPixel-3B"
-
-支持的模型:
-  - Sa2VA 系列: ByteDance/Sa2VA-*
-  - UniPixel: PolyU-ChenLab/UniPixel-{3B,7B}
-  - InternVL: OpenGVLab/InternVL*
-  - Qwen: Qwen/Qwen*-VL-*
-  - 其他: 见 README.md
-
-环境变量设置:
-  Windows (PowerShell):  $env:HF_HOME="E:/hf-download"
-  Windows (CMD):         set HF_HOME=E:/hf-download
-  Linux/Mac:             export HF_HOME=/path/to/cache
-        """
+        description="Download HuggingFace models to local cache",
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
     parser.add_argument(
@@ -133,33 +87,30 @@ def main():
         type=str,
         nargs='+',
         required=True,
-        help='要下载的模型名称（HuggingFace 格式，如 "OpenGVLab/InternVL3_5-2B"），支持多个模型'
+        help='model name(s) on HuggingFace, e.g., bytedance/sa2va-internvl3'
     )
     
     parser.add_argument(
         '--cache-dir', '-c',
         type=str,
         default=None,
-        help='模型缓存目录（可选，默认使用 HF_HOME 环境变量指定的路径）'
+        help='cache directory for models (optional)'
     )
     
     args = parser.parse_args()
     
-    # 处理多个模型
     models = args.model
     cache_dir = args.cache_dir
     
-    print(f"\n准备下载 {len(models)} 个模型...")
-    
     for i, model_name in enumerate(models, 1):
-        print(f"\n[{i}/{len(models)}] 处理模型: {model_name}")
+        print(f"{Fore.CYAN}[{i}/{len(models)}] Downloading model: {model_name}")
         try:
             download_model(model_name, cache_dir)
         except Exception as e:
-            print(f"⚠️  跳过模型 {model_name}，继续下一个...")
+            print(f"{Fore.YELLOW}WARN: Skipping model {model_name}")
             continue
     
-    print(f"\n🎉 所有任务完成！")
+    print(f"{Fore.GREEN}All models downloaded successfully")
 
 
 if __name__ == "__main__":

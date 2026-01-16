@@ -14,7 +14,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         *)
-            echo "Error: Unknown argument '$1'"
+            echo "ERROR: Unknown argument '$1'"
             echo "Usage: bash start_eval.sh --conf ./conf/config.yaml [--download]"
             echo ""
             echo "Options:"
@@ -25,75 +25,56 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Check if config file exists
 if [ ! -f "$CONFIG_PATH" ]; then
-    echo "Error: Config file not found: $CONFIG_PATH"
+    echo "ERROR: Config file not found: $CONFIG_PATH"
     exit 1
 fi
 
-echo "======================================================"
-echo "  Config: $CONFIG_PATH"
-echo "  Download Data: $DOWNLOAD_DATA"
-echo "======================================================"
+echo "============================================================"
+echo "Config: $CONFIG_PATH"
+echo "Download Datasets: $DOWNLOAD_DATA"
+echo "============================================================"
 echo ""
 
-# Check Python environment
 if ! command -v python &> /dev/null; then
-    echo "Error: Python not found!"
-    echo "Please install Python 3.8 or higher."
     exit 1
 fi
 
-# Check necessary Python packages
-echo "Checking Python dependencies..."
+
 python -c "import yaml" 2>/dev/null || {
-    echo "Installing PyYAML..."
-    pip install pyyaml
+    echo "WARN: yaml not found"
 }
 
 python -c "import huggingface_hub" 2>/dev/null || {
-    echo "Installing huggingface_hub..."
-    pip install huggingface_hub
+    echo "WARN: huggingface_hub not found"
 }
 
 python -c "import transformers" 2>/dev/null || {
-    echo "Warning: transformers not found. Please install it:"
-    echo "  pip install transformers"
+    echo "WARN: transformers not found"
 }
 
 python -c "import torch" 2>/dev/null || {
-    echo "Warning: PyTorch not found. Please install it:"
-    echo "  pip install torch"
+    echo "WARN: PyTorch not found"
 }
 
 python -c "import numpy" 2>/dev/null || {
-    echo "Warning: NumPy not found. Please install it:"
-    echo "  pip install numpy"
+    echo "WARN: NumPy not found"
 }
 
 python -c "import PIL" 2>/dev/null || {
-    echo "Warning: Pillow not found. Please install it:"
-    echo "  pip install pillow"
+    echo "WARN: Pillow not found"
 }
 
 python -c "import tqdm" 2>/dev/null || {
-    echo "Warning: tqdm not found. Please install it:"
-    echo "  pip install tqdm"
+    echo "WARN: tqdm not found"
 }
 
 python -c "import scipy" 2>/dev/null || {
-    echo "Warning: scipy not found (needed for mask evaluation):"
-    echo "  pip install scipy"
+    echo "WARN: scipy not found (needed for mask evaluation)"
 }
 
-echo ""
-echo "Starting evaluation..."
-echo "=============================================="
-echo ""
-
-# Set PyTorch CUDA memory allocator to avoid fragmentation
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-echo "✓ Set PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"
+echo "Set PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"
 echo ""
 
 CMD="python eval.py --config \"$CONFIG_PATH\""

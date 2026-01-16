@@ -3,14 +3,13 @@ datasets:
   local_dir: "./datasets"
 
 model:
-  name: ""  # local path or model hub name
-  alias: ""  # huggingface model alias
+  name: ""  # local path or huggingface model name
+  alias: null  # huggingface model alias
   device: "cuda"
   torch_dtype: "bfloat16"
   use_flash_attn: true
   trust_remote_code: true
   cache_dir: null
-  
 
 task:
   type: "all"  # all, qa, mask
@@ -23,4 +22,4 @@ evaluation:
 output:
   results_dir: "./results"
   save_details: true
-  save_masks: true 
+  save_masks: true

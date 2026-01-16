@@ -3,36 +3,26 @@ from pathlib import Path
 from typing import List, Dict
 from collections import defaultdict
 from datetime import datetime
+from colorama import Fore, init
+init(autoreset=True)
 
 
 def get_display_name_for_results(config: Dict) -> tuple:
-    """
-    获取用于显示和保存的模型名称
-    
-    Returns:
-        tuple: (dir_name, display_name)
-            - dir_name: 用于目录名（只取最后部分）
-            - display_name: 用于显示的完整名称
-    """
     model_config = config.get('model', {})
     model_name = model_config.get('name', '')
     model_alias = model_config.get('alias', None)
     
-    # 如果有 alias，使用 alias
     if model_alias:
         display_name = model_alias
         dir_name = model_alias.split('/')[-1]
     else:
-        # 没有 alias，尝试从路径提取或直接使用 name
         from .load_model import extract_model_name_from_path, is_local_path
         
         if is_local_path(model_name):
-            # 从本地路径提取
             extracted = extract_model_name_from_path(model_name)
             display_name = extracted
             dir_name = extracted.split('/')[-1]
         else:
-            # HuggingFace 名称
             display_name = model_name
             dir_name = model_name.split('/')[-1]
     
@@ -40,30 +30,20 @@ def get_display_name_for_results(config: Dict) -> tuple:
 
 
 def save_results(results: List[Dict], config: Dict, summary: Dict):
-    """
-    Args:
-        results: 评测结果列表
-        config: 配置字典
-        summary: 汇总统计信息
-    """
-    
     output_config = config['output']
     results_dir = Path(output_config['results_dir'])
     
-    # 获取显示名称和目录名
     dir_name, display_name = get_display_name_for_results(config)
     
     model_results_dir = results_dir / dir_name
     
-    # 创建目录
     qa_details_dir = model_results_dir / "qa_details"
     mask_details_dir = model_results_dir / "mask_details"
     qa_details_dir.mkdir(parents=True, exist_ok=True)
     mask_details_dir.mkdir(parents=True, exist_ok=True)
     
-    print(f"\nSaving results to {model_results_dir}...")
+    print(f"\n{Fore.CYAN}Saving results to {model_results_dir}")
     
-    # 按场景和任务类型组织结果
     qa_results_by_scene = defaultdict(list)
     mask_results_by_scene = defaultdict(list)
     
@@ -77,7 +57,6 @@ def save_results(results: List[Dict], config: Dict, summary: Dict):
         else:
             qa_results_by_scene[(dataset, scene_name, task_type)].append(result)
     
-    # 保存QA详情
     for (dataset, scene_name, task_type), task_results in qa_results_by_scene.items():
         scene_dir = qa_details_dir / dataset
         scene_dir.mkdir(parents=True, exist_ok=True)
@@ -97,10 +76,9 @@ def save_results(results: List[Dict], config: Dict, summary: Dict):
         with open(details_file, 'w', encoding='utf-8') as f:
             json.dump(qa_details, f, indent=2, ensure_ascii=False)
     
-    print(f"✓ QA details saved to: {qa_details_dir}")
-    print(f"✓ Mask details saved to: {mask_details_dir}")
+    print(f"{Fore.CYAN}QA details saved to: {qa_details_dir}")
+    print(f"{Fore.CYAN}Mask details saved to: {mask_details_dir}")
     
-    # 保存overall.txt
     overall_file = model_results_dir / "overall.txt"
     
     with open(overall_file, 'w', encoding='utf-8') as f:
@@ -128,4 +106,4 @@ def save_results(results: List[Dict], config: Dict, summary: Dict):
             f.write(f"  Overall Score: {summary['Overall']:.2f}%\n")
             f.write("=" * 60 + "\n")
     
-    print(f"✓ Overall results saved to: {overall_file}")
+    print(f"{Fore.CYAN}Overall results saved to: {overall_file}")
