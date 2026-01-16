@@ -35,10 +35,10 @@
 | **Qwen3-VL** | 2B / 4B / 8B / 32B | `Qwen/Qwen3-VL-{2B,4B,8B,32B}-Instruct` |
 | **Qwen3-VL-MoE** | 235B-A22B | `Qwen/Qwen3-VL-235B-A22B-Instruct` |
 | **LLaVA-OneVision** | 4B / 8B | `lmms-lab/LLaVA-One-Vision-1.5-{4B,8B}-Instruct` |
+| **SpaceR-SFT** | 3B / 7B | `RUBBISHLIKE/SpaceR-SFT-{3B,7B}` |
 | **VST** | 7B | `rayruiyang/VST-7B-RL` |
 | **Spatial-SSRL** | 7B | `internlm/Spatial-SSRL-7B` |
 | **SpatialLadder** | 3B | `hongxingli/SpatialLadder-3B` |
-| **SpaceR-SFT** | 3B / 7B | `RUBBISHLIKE/SpaceR-SFT-{3B,7B}` |
 
 ## 🚀 快速开始
 
