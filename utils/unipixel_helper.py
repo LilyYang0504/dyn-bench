@@ -195,22 +195,25 @@ def run_unipixel_mask(
     masks = []
     if len(model.seg) >= 1:
         for seg in model.seg:
+            # 转换为 numpy 数组
             if isinstance(seg, np.ndarray):
                 seg_array = seg
             else:
                 seg_array = seg.cpu().numpy() if hasattr(seg, 'cpu') else np.array(seg)
             
+            # 去除多余的 batch/channel 维度
             seg_array = np.squeeze(seg_array)
-            if seg_array.ndim != 2:
-                print(f"WARN: UniPixel mask shape {seg_array.shape}, expected 2D")
-                H, W = frames.shape[1:3]
-                if seg_array.size == H * W:
-                    seg_array = seg_array.reshape(H, W)
-                else:
-                    print(f"ERROR: Cannot reshape mask size {seg_array.size} to ({H}, {W})")
-                    continue
             
-            masks.append(seg_array)
+            # 处理 3D 数组 (T, H, W) - 视频 mask
+            if seg_array.ndim == 3:
+                # 按第 0 维拆分成多个 2D mask
+                for i in range(seg_array.shape[0]):
+                    masks.append(seg_array[i])
+            # 处理 2D 数组 (H, W) - 单帧 mask
+            elif seg_array.ndim == 2:
+                masks.append(seg_array)
+            else:
+                print(f"WARNING: Unexpected UniPixel mask shape {seg_array.shape}, skipping")
     
     if len(masks) == 0:
         H, W = frames.shape[1:3]
