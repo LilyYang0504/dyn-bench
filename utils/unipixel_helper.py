@@ -196,9 +196,21 @@ def run_unipixel_mask(
     if len(model.seg) >= 1:
         for seg in model.seg:
             if isinstance(seg, np.ndarray):
-                masks.append(seg)
+                seg_array = seg
             else:
-                masks.append(seg.cpu().numpy() if hasattr(seg, 'cpu') else np.array(seg))
+                seg_array = seg.cpu().numpy() if hasattr(seg, 'cpu') else np.array(seg)
+            
+            seg_array = np.squeeze(seg_array)
+            if seg_array.ndim != 2:
+                print(f"WARN: UniPixel mask shape {seg_array.shape}, expected 2D")
+                H, W = frames.shape[1:3]
+                if seg_array.size == H * W:
+                    seg_array = seg_array.reshape(H, W)
+                else:
+                    print(f"ERROR: Cannot reshape mask size {seg_array.size} to ({H}, {W})")
+                    continue
+            
+            masks.append(seg_array)
     
     if len(masks) == 0:
         H, W = frames.shape[1:3]
