@@ -107,6 +107,8 @@ def run_unipixel_qa(
     data['frames'] = [sam2_transform(frames_tensor).to(model.sam2.dtype)]
     data['frame_size'] = [frames.shape[1:3]]
     
+    model.seg = []
+    
     with torch.no_grad():
         output_ids = model.generate(
             **data.to(device),
@@ -168,6 +170,8 @@ def run_unipixel_mask(
     frames_tensor = torch.from_numpy(frames)  # [T, H, W, C]
     data['frames'] = [sam2_transform(frames_tensor).to(model.sam2.dtype)]
     data['frame_size'] = [frames.shape[1:3]]
+    
+    model.seg = []
     
     with torch.no_grad():
         output_ids = model.generate(
