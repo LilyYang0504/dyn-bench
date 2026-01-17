@@ -181,6 +181,7 @@ def main():
                     
                     for idx, mask in enumerate(pred_masks):
                         if isinstance(mask, np.ndarray):
+                            mask = np.squeeze(mask)
                             if mask.dtype != np.uint8:
                                 mask_img = (mask > 0.5).astype(np.uint8) * 255
                             else:
