@@ -51,8 +51,8 @@
 conda create -n bench python=3.10
 conda activate bench
 
-# 安装 PyTorch（根据 CUDA 版本自行安装 建议2.8.0）
-pip install torch torchvision
+# 安装 PyTorch(根据 CUDA 版本自行安装 建议2.8.0)
+pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128
 
 # 安装其他依赖
 pip install transformers huggingface_hub hf_xet
@@ -86,10 +86,10 @@ task:
 
 ```bash
 # 首次运行需下载数据集
-bash start_eval.sh --conf ./conf/config.yaml --download
+bash start_eval.sh --conf conf/config.yaml --download
 
 # 后续运行
-bash start_eval.sh --conf ./conf/config.yaml
+bash start_eval.sh --conf conf/config.yaml
 ```
 
 ---
@@ -115,12 +115,6 @@ python download_model.py --model "OpenGVLab/InternVL3_5-2B" "Qwen/Qwen2.5-VL-7B-
 python download_model.py --model "OpenGVLab/InternVL3_5-2B" --cache-dir "E:/hf-download"
 ```
 
-模型下载后的默认路径格式：
-```
-{HF_HOME}/hub/models--{org}--{model}/snapshots/{hash}/
-例如: E:/hf-download/hub/models--OpenGVLab--InternVL3_5-2B/snapshots/7d7bd7b.../
-```
-
 #### 3. 配置文件（在离线环境）
 
 **标准方式：**
@@ -134,7 +128,7 @@ model:
 **匿名测试方式（模型文件夹已改名）：**
 ```yaml
 model:
-  name: "E:/test/mymodel1"           # 重命名后的文件夹路径
+  name: "E:/test/mymodel1"           # 重命名后的文件夹路径(推荐绝对路径)
   alias: "OpenGVLab/InternVL3_5-2B"  # 映射到标准 HF 名称
   device: "cuda"
 ```
@@ -142,25 +136,12 @@ model:
 #### 4. 运行评测
 
 ```bash
-bash start_eval.sh --conf ./conf/config.yaml
+bash start_eval.sh --conf conf/config.yaml
 ```
 
 ---
 
-## 📝 匿名测试说明
 
-匿名测试允许您将模型文件夹重命名为任意名称（如 `mymodel1`、`modelA`），通过 `alias` 字段映射到标准模型名称。
-
-
-### 支持的标准模型名称（用于 alias）
-
-- **Sa2VA**: `ByteDance/Sa2VA-{1B,4B,8B}`, `ByteDance/Sa2VA-InternVL3-{2B,8B,14B}`, `ByteDance/Sa2VA-Qwen2_5-VL-{3B,7B}`, `ByteDance/Sa2VA-Qwen3-VL-{2B,4B}`
-- **UniPixel**: `PolyU-ChenLab/UniPixel-{3B,7B}`
-- **InternVL**: `OpenGVLab/InternVL3-{1B,2B,8B,78B}`, `OpenGVLab/InternVL3_5-{1B,2B,4B,8B,14B,38B}`
-- **Qwen**: `Qwen/Qwen2.5-VL-{3B,7B,32B,72B}-Instruct`, `Qwen/Qwen3-VL-{2B,4B,8B,32B}-Instruct`
-- **其他**: `lmms-lab/LLaVA-OneVision-*`, `rayruiyang/VST-7B-RL`, `internlm/Spatial-SSRL-7B`, `RUBBISHLIKE/SpaceR-SFT-{3B,7B}`
-
----
 
 ## 🔧 UniPixel 模型特殊说明
 
@@ -173,36 +154,30 @@ UniPixel 模型需要额外的安装步骤，因为它使用自定义的模型�
 mkdir -p thirdparty
 cd thirdparty
 git clone https://github.com/PolyU-ChenLab/UniPixel.git
-
-
 cd UniPixel
 
-# 2. 安装依赖（Windows 需跳过 deepspeed 和 triton）
+# 2. 安装依赖(可指定transformers不安装特定版本)
 pip install -r requirements.txt
 ```
 
 ### 下载 UniPixel 模型
 
 ```bash
-python download_model.py --model PolyU-ChenLab/UniPixel-3B --cache-dir ./models
-
-python download_model.py --model PolyU-ChenLab/UniPixel-7B --cache-dir ./models
+python download_model.py --model "PolyU-ChenLab/UniPixel-3B/7B" --cache-dir "path/to/your/model"
 ```
 
 ### 使用 UniPixel
 
 **在线评测**:
 ```yaml
-# config.yaml
 model:
-  name: "PolyU-ChenLab/UniPixel-3B"  # 自动下载
-  alias: null  # 自动使用标准名称
-  cache_dir: "./models"
+  name: "PolyU-ChenLab/UniPixel-3B"
+  alias: null
+  cache_dir: null
 ```
 
 **离线评测**:
 ```yaml
-# config.yaml
 model:
   name: "./models/models--PolyU-ChenLab--UniPixel-3B/snapshots/<hash>"
   alias: null  # 自动从路径提取 "PolyU-ChenLab/UniPixel-3B"
@@ -211,7 +186,6 @@ model:
 
 **匿名测评** (保持标准名称):
 ```yaml
-# 将模型文件夹重命名为 mymodel1，但结果使用标准名称
 model:
   name: "./models/mymodel1"
   alias: "PolyU-ChenLab/UniPixel-3B"  # 显式指定

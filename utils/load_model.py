@@ -122,12 +122,12 @@ def load_model(config: Dict) -> Dict[str, Any]:
     local_files_only = is_local_path(model_name)
     
     if model_alias:
-        print(f"Model alias: {model_name} -> {model_alias}")
+        print(f"{Fore.CYAN}Model alias: {model_name} -> {model_alias}")
         model_type = get_model_type(model_alias)
-        print(f"Model type (from alias): {model_type}")
+        print(f"{Fore.CYAN}Model type (from alias): {model_type}")
     else:
         model_type = get_model_type(model_name)
-        print(f"Model type (auto-detected): {model_type}")
+        print(f"{Fore.CYAN}Model type (auto-detected): {model_type}")
     torch_dtype_str = config['model'].get('torch_dtype', 'bfloat16')
     if torch_dtype_str == "auto":
         torch_dtype = "auto"

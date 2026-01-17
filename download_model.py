@@ -98,7 +98,6 @@ def main():
     )
     
     args = parser.parse_args()
-    
     models = args.model
     cache_dir = args.cache_dir
     

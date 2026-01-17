@@ -1,10 +1,10 @@
 datasets:
-  repo_name: "LilyYang0504/BenchDatasets"
+  repo_name: "LilyYang0504/BenchDatasets"  # HuggingFace repo name
   local_dir: "./datasets"
 
 model:
-  name: ""  # local path or huggingface model name
-  alias: null  # huggingface model alias
+  name: ""  # local path or Huggingface model name
+  alias: null  # Huggingface model alias
   device: "cuda"
   torch_dtype: "bfloat16"
   use_flash_attn: true

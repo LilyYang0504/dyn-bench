@@ -30,6 +30,7 @@ if [ ! -f "$CONFIG_PATH" ]; then
     exit 1
 fi
 
+echo ""
 echo "============================================================"
 echo "Config: $CONFIG_PATH"
 echo "Download Datasets: $DOWNLOAD_DATA"

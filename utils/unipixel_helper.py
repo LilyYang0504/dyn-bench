@@ -81,7 +81,7 @@ def run_unipixel_qa(
     sam2_transform = get_sam2_transform(model.config.sam2_image_size)
     
     frames_list = [np.array(Image.open(p).convert('RGB')) for p in frame_paths]
-    frames = np.stack(frames_list, axis=0)  # [T, H, W, C]
+    frames = np.stack(frames_list, axis=0)
     
     messages = [{
         'role': 'user',
@@ -103,7 +103,7 @@ def run_unipixel_qa(
     images, videos, kwargs = process_vision_info(messages, return_video_kwargs=True)
     
     data = processor(text=[text], images=images, videos=videos, return_tensors='pt', **kwargs)
-    frames_tensor = torch.from_numpy(frames)  # [T, H, W, C]
+    frames_tensor = torch.from_numpy(frames)
     data['frames'] = [sam2_transform(frames_tensor).to(model.sam2.dtype)]
     data['frame_size'] = [frames.shape[1:3]]
     
@@ -145,7 +145,7 @@ def run_unipixel_mask(
     sam2_transform = get_sam2_transform(model.config.sam2_image_size)
     
     frames_list = [np.array(Image.open(p).convert('RGB')) for p in frame_paths]
-    frames = np.stack(frames_list, axis=0)  # [T, H, W, C]
+    frames = np.stack(frames_list, axis=0)
     
     messages = [{
         'role': 'user',
@@ -167,7 +167,7 @@ def run_unipixel_mask(
     images, videos, kwargs = process_vision_info(messages, return_video_kwargs=True)
     
     data = processor(text=[text], images=images, videos=videos, return_tensors='pt', **kwargs)
-    frames_tensor = torch.from_numpy(frames)  # [T, H, W, C]
+    frames_tensor = torch.from_numpy(frames)
     data['frames'] = [sam2_transform(frames_tensor).to(model.sam2.dtype)]
     data['frame_size'] = [frames.shape[1:3]]
     
@@ -195,25 +195,20 @@ def run_unipixel_mask(
     masks = []
     if len(model.seg) >= 1:
         for seg in model.seg:
-            # 转换为 numpy 数组
             if isinstance(seg, np.ndarray):
                 seg_array = seg
             else:
                 seg_array = seg.cpu().numpy() if hasattr(seg, 'cpu') else np.array(seg)
             
-            # 去除多余的 batch/channel 维度
             seg_array = np.squeeze(seg_array)
             
-            # 处理 3D 数组 (T, H, W) - 视频 mask
             if seg_array.ndim == 3:
-                # 按第 0 维拆分成多个 2D mask
                 for i in range(seg_array.shape[0]):
                     masks.append(seg_array[i])
-            # 处理 2D 数组 (H, W) - 单帧 mask
             elif seg_array.ndim == 2:
                 masks.append(seg_array)
             else:
-                print(f"WARNING: Unexpected UniPixel mask shape {seg_array.shape}, skipping")
+                print(f"{Fore.YELLOW}WARN: Unexpected UniPixel mask shape {seg_array.shape}")
     
     if len(masks) == 0:
         H, W = frames.shape[1:3]
