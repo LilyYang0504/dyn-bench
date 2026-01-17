@@ -220,7 +220,7 @@ def load_model(config: Dict) -> Dict[str, Any]:
             model_name,
             torch_dtype=torch_dtype,
             low_cpu_mem_usage=True,
-            attn_implementation="eager",
+            attn_implementation=attn_implementation,
             device_map="auto",
             trust_remote_code=trust_remote_code,
             cache_dir=cache_dir,
