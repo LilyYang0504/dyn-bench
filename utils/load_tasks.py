@@ -66,7 +66,11 @@ def load_all_tasks(datasets_dir: Path, task_type: str = "all") -> List[Dict[str,
 
             frame_paths = sorted(glob.glob(str(frames_dir / "frame_*.jpg")))
             if not frame_paths:
+                frame_paths = sorted(glob.glob(str(frames_dir / "frame_*.png")))
+            if not frame_paths:
                 frame_paths = sorted(glob.glob(str(frames_dir / "*.jpg")))
+            if not frame_paths:
+                frame_paths = sorted(glob.glob(str(frames_dir / "*.png")))
 
             if not frame_paths:
                 print(f"{Fore.YELLOW}WARN: No frames found in: {frames_dir}")
