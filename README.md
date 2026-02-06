@@ -48,8 +48,8 @@
 
 ```bash
 # 创建虚拟环境
-conda create -n bench python=3.10
-conda activate bench
+conda create -n dyn-bench python=3.10
+conda activate dyn-bench
 
 # 安装 PyTorch(根据 CUDA 版本自行安装 建议2.8.0)
 pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128
@@ -62,8 +62,8 @@ pip install pyyaml numpy pillow tqdm scipy peft einops timm
 #### 2. 拉取仓库
 
 ```bash
-git clone https://github.com/LilyYang0504/Bench.git
-cd Bench
+git clone https://github.com/LilyYang0504/dyn-bench.git
+cd dyn-bench
 ```
 
 #### 3. 配置文件
